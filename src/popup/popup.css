@@ -1,0 +1,31 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+.popup {
+  padding: 16px;
+  min-width: 220px;
+  display: grid;
+  gap: 12px;
+}
+
+button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid currentColor;
+  cursor: pointer;
+  background: transparent;
+}
+
+#log {
+  white-space: pre-wrap;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 8px;
+  border-radius: 6px;
+  min-height: 60px;
+}
