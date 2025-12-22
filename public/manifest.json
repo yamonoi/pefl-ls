@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Pefl LS Extension",
+  "version": "0.1.0",
+  "description": "Boilerplate Chrome extension built with Vite and plain JavaScript.",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://pefl.ru/plug.php?p=sc*"],
+      "js": ["content.js"]
+    }
+  ],
+  "permissions": ["storage"]
+}
