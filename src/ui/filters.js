@@ -253,7 +253,12 @@ export function renderFiltersUI(panel, state, onChange, getState) {
         .filter((x) => x.checked)
         .map((x) => x.dataset.pos)
     );
+
+    const currentState = typeof getState === "function" ? getState() : state;
+    const hasActivePreset = !!currentState?.activePresetId;
+
     const nextState = {
+      ...currentState,
       positions,
       matchAllPositions: !!panel.querySelector("#matchAllPos").checked,
       ageMin: parseInt(panel.querySelector("#ageMin").value || "16", 10),
@@ -270,10 +275,10 @@ export function renderFiltersUI(panel, state, onChange, getState) {
       ),
       onlyTransfer: !!panel.querySelector("#onlyTransfer").checked,
       onlyUnneeded: !!panel.querySelector("#onlyUnneeded").checked,
-
-      // активный пресет не затираем при ручных изменениях
-      activePresetId: state.activePresetId,
-      activePresetName: state.activePresetName,
+      activePresetId: hasActivePreset ? "" : currentState?.activePresetId || "",
+      activePresetName: hasActivePreset
+        ? ""
+        : currentState?.activePresetName || "",
     };
 
     onChange(nextState);
@@ -295,7 +300,7 @@ export function renderFiltersUI(panel, state, onChange, getState) {
     };
     onChange(nextState);
 
-    renderFiltersUI(panel, nextState, onChange);
+    renderFiltersUI(panel, nextState, onChange, getState);
     const details = panel.querySelector("#pefl-ext-details");
     if (details) details.open = true;
   });
@@ -306,18 +311,38 @@ export function renderFiltersUI(panel, state, onChange, getState) {
     const name = prompt("Название пресета:", "Мой пресет");
     if (!name) return;
 
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+
     const presets = loadPresets();
+    if (
+      presets.some(
+        (p) => p?.name?.trim().toLowerCase() === trimmedName.toLowerCase()
+      )
+    ) {
+      alert("Пресет с таким именем уже существует");
+      return;
+    }
+
     const currentState = getState();
-    presets.unshift({
+    const newPreset = {
       id: uuid(),
-      name: name.trim(),
+      name: trimmedName,
       createdAt: Date.now(),
       filters: stateToPresetFilters(currentState),
-    });
+    };
+    presets.unshift(newPreset);
     savePresets(presets);
 
+    const nextState = {
+      ...currentState,
+      activePresetId: newPreset.id,
+      activePresetName: newPreset.name,
+    };
+    onChange(nextState);
+
     const wasOpen = !!panel.querySelector("#pefl-ext-details")?.open;
-    renderFiltersUI(panel, state, onChange);
+    renderFiltersUI(panel, nextState, onChange, getState);
     const details = panel.querySelector("#pefl-ext-details");
     if (details) details.open = wasOpen || true;
   });
@@ -336,11 +361,13 @@ export function renderFiltersUI(panel, state, onChange, getState) {
     const preset = presetsNow.find((x) => x.id === presetId);
     if (!preset) return;
 
+    const baseState = typeof getState === "function" ? getState() : state;
+
     if (action === "apply") {
       const nextFilters = presetFiltersToState(preset.filters);
 
       const nextState = {
-        ...state,
+        ...baseState,
         ...nextFilters,
         activePresetId: preset.id,
         activePresetName: preset.name || "",
@@ -349,7 +376,7 @@ export function renderFiltersUI(panel, state, onChange, getState) {
       onChange(nextState);
 
       const wasOpen = !!panel.querySelector("#pefl-ext-details")?.open;
-      renderFiltersUI(panel, nextState, onChange);
+      renderFiltersUI(panel, nextState, onChange, getState);
       const details = panel.querySelector("#pefl-ext-details");
       if (details) details.open = wasOpen || true;
 
@@ -357,11 +384,15 @@ export function renderFiltersUI(panel, state, onChange, getState) {
     }
 
     if (action === "clear") {
-      const nextState = { ...state, activePresetId: "", activePresetName: "" };
+      const nextState = {
+        ...baseState,
+        activePresetId: "",
+        activePresetName: "",
+      };
       onChange(nextState);
 
       const wasOpen = !!panel.querySelector("#pefl-ext-details")?.open;
-      renderFiltersUI(panel, nextState, onChange);
+      renderFiltersUI(panel, nextState, onChange, getState);
       const details = panel.querySelector("#pefl-ext-details");
       if (details) details.open = wasOpen || true;
 
@@ -372,14 +403,14 @@ export function renderFiltersUI(panel, state, onChange, getState) {
       const nextPresets = presetsNow.filter((x) => x.id !== presetId);
       savePresets(nextPresets);
 
-      const isActive = state.activePresetId === presetId;
+      const isActive = baseState.activePresetId === presetId;
       const nextState = isActive
-        ? { ...state, activePresetId: "", activePresetName: "" }
-        : state;
+        ? { ...baseState, activePresetId: "", activePresetName: "" }
+        : baseState;
       if (isActive) onChange(nextState);
 
       const wasOpen = !!panel.querySelector("#pefl-ext-details")?.open;
-      renderFiltersUI(panel, nextState, onChange);
+      renderFiltersUI(panel, nextState, onChange, getState);
       const details = panel.querySelector("#pefl-ext-details");
       if (details) details.open = wasOpen || true;
     }
