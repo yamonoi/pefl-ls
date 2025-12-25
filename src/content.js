@@ -3,6 +3,44 @@ import { applyFiltersToExistingTable } from "./lib/filters";
 import { renderFiltersUI } from "./ui/filters";
 import { renderPanelUI } from "./ui/panel";
 
+function watchGridRerenderAndReapply(stateRef) {
+  // stateRef = { get: () => state }
+  const grid =
+    document.querySelector("table.ui-jqgrid-btable") ||
+    document.querySelector("table[id]");
+  if (!grid) return () => {};
+
+  const tbody = grid.querySelector("tbody") || grid;
+  const obs = new MutationObserver(() => {
+    // jqGrid иногда мутирует пачкой — сделаем micro-debounce
+    clearTimeout(watchGridRerenderAndReapply._t);
+    watchGridRerenderAndReapply._t = setTimeout(() => {
+      applyFiltersToExistingTable(stateRef.get());
+    }, 0);
+  });
+
+  obs.observe(tbody, { childList: true, subtree: true });
+  return () => obs.disconnect();
+}
+
+function hidePeflUI() {
+  const style = document.createElement("style");
+  style.textContent = `
+    /* Ссылки под таблицей */
+    a[href*="plug.php?p=sc"][href*="n=1"],
+    a[href*="plug.php?p=sc"][href*="n=2"] {
+      display: none !important;
+    }
+
+    /* Pager jqGrid */
+    #pager1_center,
+    #pager1_right {
+      display: none !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 (async function () {
   const params = new URLSearchParams(location.search);
   if (params.get("p") !== "sc") return;
@@ -36,6 +74,8 @@ import { renderPanelUI } from "./ui/panel";
     return;
   }
 
+  hidePeflUI();
+
   let state = defaultState;
 
   const panel = renderPanelUI();
@@ -52,4 +92,7 @@ import { renderPanelUI } from "./ui/panel";
 
   // применим сразу на старте
   applyFiltersToExistingTable(state);
+
+  const stateRef = { get: () => state };
+  watchGridRerenderAndReapply(stateRef);
 })();
