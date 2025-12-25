@@ -112,8 +112,6 @@ function rowMatchesFilters(data, f) {
 }
 
 export function isDefaultFilters(state) {
-  console.log(state);
-  console.log(defaultState);
   const d = defaultState;
 
   const posSize = state?.positions instanceof Set ? state.positions.size : 0;

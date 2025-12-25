@@ -472,7 +472,6 @@ function waitForRows({ timeoutMs = 15000, intervalMs = 100 } = {}) {
   const original = contentCell.innerHTML;
   await waitForRows();
   const players = parsePlayersFromGrid();
-  console.log(players);
 
   // root для твоего UI
   const root = document.createElement("div");
