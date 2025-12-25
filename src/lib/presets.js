@@ -14,6 +14,45 @@ export function savePresets(presets) {
   localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
 }
 
+function normalizeFiltersForCompare(filtersLikeState) {
+  const asPreset = stateToPresetFilters(filtersLikeState);
+
+  return {
+    ...asPreset,
+    positions: [...(asPreset.positions || [])].sort(),
+  };
+}
+
+export function arePresetFiltersEqual(state, presetFilters) {
+  if (!presetFilters) return false;
+
+  const normalizedState = normalizeFiltersForCompare(state);
+  const normalizedPreset = normalizeFiltersForCompare(
+    presetFiltersToState(presetFilters)
+  );
+
+  if (normalizedState.positions.length !== normalizedPreset.positions.length)
+    return false;
+
+  for (let i = 0; i < normalizedState.positions.length; i++) {
+    if (normalizedState.positions[i] !== normalizedPreset.positions[i]) {
+      return false;
+    }
+  }
+
+  return (
+    normalizedState.matchAllPositions === normalizedPreset.matchAllPositions &&
+    normalizedState.ageMin === normalizedPreset.ageMin &&
+    normalizedState.ageMax === normalizedPreset.ageMax &&
+    normalizedState.valueMin === normalizedPreset.valueMin &&
+    normalizedState.valueMax === normalizedPreset.valueMax &&
+    normalizedState.priceMin === normalizedPreset.priceMin &&
+    normalizedState.priceMax === normalizedPreset.priceMax &&
+    normalizedState.onlyTransfer === normalizedPreset.onlyTransfer &&
+    normalizedState.onlyUnneeded === normalizedPreset.onlyUnneeded
+  );
+}
+
 export function stateToPresetFilters(state) {
   return {
     positions: Array.from(state.positions),

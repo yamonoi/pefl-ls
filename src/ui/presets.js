@@ -1,5 +1,6 @@
-import { loadPresets } from "../lib/presets";
+import { loadPresets, presetFiltersToState } from "../lib/presets";
 import { escapeHtml } from "../lib/helpers";
+import { countRowsMatchingFilters } from "../lib/filters";
 
 export function renderPresetsUI(panel, state) {
   const presets = loadPresets().filter((p) => p && p.id && p.name && p.filters);
@@ -14,6 +15,9 @@ export function renderPresetsUI(panel, state) {
   list.innerHTML = presets
     .map((p) => {
       const isActive = state?.activePresetId && state.activePresetId === p.id;
+      const playersCount = countRowsMatchingFilters(
+        presetFiltersToState(p.filters)
+      );
 
       return `
         <div data-preset-id="${escapeHtml(p.id)}" style="
@@ -28,7 +32,7 @@ export function renderPresetsUI(panel, state) {
           font: 12px/1.2 system-ui;
         ">
           <div style="display:flex; flex-direction:column; gap:2px;">
-            <div style="font-weight:700;">${escapeHtml(p.name)}</div>
+            <div style="font-weight:700;">${escapeHtml(p.name)} (${playersCount})</div>
           </div>
 
           <div style="display:flex; gap:8px; align-items:center;">

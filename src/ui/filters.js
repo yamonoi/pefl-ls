@@ -6,6 +6,7 @@ import {
   savePresets,
   stateToPresetFilters,
   presetFiltersToState,
+  arePresetFiltersEqual,
 } from "../lib/presets";
 import { isDefaultFilters } from "../lib/filters";
 import { renderPresetsUI } from "./presets";
@@ -255,8 +256,6 @@ export function renderFiltersUI(panel, state, onChange, getState) {
     );
 
     const currentState = typeof getState === "function" ? getState() : state;
-    const hasActivePreset = !!currentState?.activePresetId;
-
     const nextState = {
       ...currentState,
       positions,
@@ -275,11 +274,24 @@ export function renderFiltersUI(panel, state, onChange, getState) {
       ),
       onlyTransfer: !!panel.querySelector("#onlyTransfer").checked,
       onlyUnneeded: !!panel.querySelector("#onlyUnneeded").checked,
-      activePresetId: hasActivePreset ? "" : currentState?.activePresetId || "",
-      activePresetName: hasActivePreset
-        ? ""
-        : currentState?.activePresetName || "",
+      activePresetId: currentState?.activePresetId || "",
+      activePresetName: currentState?.activePresetName || "",
     };
+
+    if (nextState.activePresetId) {
+      const activePreset = loadPresets().find(
+        (p) => p.id === nextState.activePresetId
+      );
+
+      const matchesPreset = activePreset
+        ? arePresetFiltersEqual(nextState, activePreset.filters)
+        : false;
+
+      if (!matchesPreset) {
+        nextState.activePresetId = "";
+        nextState.activePresetName = "";
+      }
+    }
 
     onChange(nextState);
 
@@ -295,6 +307,7 @@ export function renderFiltersUI(panel, state, onChange, getState) {
 
     const nextState = {
       ...defaultState,
+      positions: new Set(defaultState.positions),
       activePresetId: "",
       activePresetName: "",
     };
@@ -385,9 +398,8 @@ export function renderFiltersUI(panel, state, onChange, getState) {
 
     if (action === "clear") {
       const nextState = {
-        ...baseState,
-        activePresetId: "",
-        activePresetName: "",
+        ...defaultState,
+        positions: new Set(defaultState.positions),
       };
       onChange(nextState);
 
