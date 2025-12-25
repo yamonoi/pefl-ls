@@ -153,3 +153,15 @@ export function applyFiltersToExistingTable(filters) {
   // если хочешь, можно где-то показать счётчик
   console.log(`[EXT] shown ${shown}/${rows.length}`);
 }
+
+export function countRowsMatchingFilters(filters) {
+  const rows = document.querySelectorAll('tr.jqgrow[role="row"]');
+  let count = 0;
+
+  rows.forEach((tr) => {
+    const data = rowToData(tr);
+    if (rowMatchesFilters(data, filters)) count++;
+  });
+
+  return count;
+}
