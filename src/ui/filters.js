@@ -249,6 +249,10 @@ export function renderFiltersUI(panel, state, onChange, getState) {
   renderPresetsUI(panel, state);
 
   const emit = () => {
+    const previousActivePresetId = (
+      typeof getState === "function" ? getState() : state
+    )?.activePresetId;
+
     const positions = new Set(
       [...panel.querySelectorAll('input[type="checkbox"][data-pos]')]
         .filter((x) => x.checked)
@@ -297,6 +301,13 @@ export function renderFiltersUI(panel, state, onChange, getState) {
 
     const createBtn = panel.querySelector("#createPresetBtn");
     createBtn.disabled = isDefaultFilters(nextState);
+
+    if (
+      (previousActivePresetId || nextState.activePresetId) &&
+      previousActivePresetId !== nextState.activePresetId
+    ) {
+      renderPresetsUI(panel, nextState);
+    }
   };
 
   panel.addEventListener("input", emit);
