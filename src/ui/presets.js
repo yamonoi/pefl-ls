@@ -2,6 +2,31 @@ import { loadPresets, presetFiltersToState } from "../lib/presets";
 import { escapeHtml } from "../lib/helpers";
 import { countRowsMatchingFilters } from "../lib/filters";
 
+function ensureRowsLoaded(panel, state) {
+  const rows = document.querySelectorAll('tr.jqgrow[role="row"]');
+  if (rows.length > 0) {
+    panel.__presetRowsObserver?.disconnect?.();
+    panel.__presetRowsObserver = null;
+    return true;
+  }
+
+  if (!panel.__presetRowsObserver) {
+    const observer = new MutationObserver(() => {
+      const rowsNow = document.querySelectorAll('tr.jqgrow[role="row"]');
+      if (rowsNow.length > 0) {
+        observer.disconnect();
+        panel.__presetRowsObserver = null;
+        renderPresetsUI(panel, state);
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+    panel.__presetRowsObserver = observer;
+  }
+
+  return false;
+}
+
 export function renderPresetsUI(panel, state) {
   const presets = loadPresets().filter((p) => p && p.id && p.name && p.filters);
   const list = panel.querySelector("#presetsList");
@@ -12,12 +37,14 @@ export function renderPresetsUI(panel, state) {
     return;
   }
 
+  const rowsReady = ensureRowsLoaded(panel, state);
+
   list.innerHTML = presets
     .map((p) => {
       const isActive = state?.activePresetId && state.activePresetId === p.id;
-      const playersCount = countRowsMatchingFilters(
-        presetFiltersToState(p.filters)
-      );
+      const playersCount = rowsReady
+        ? countRowsMatchingFilters(presetFiltersToState(p.filters))
+        : "…";
 
       return `
         <div data-preset-id="${escapeHtml(p.id)}" style="
