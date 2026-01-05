@@ -33,8 +33,7 @@ function hidePeflUI() {
     }
 
     /* Pager jqGrid */
-    #pager1_center,
-    #pager1_right {
+    #pager1_center {
       display: none !important;
     }
   `;
